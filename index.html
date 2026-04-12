@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Victor Finance Cloud - Google Auth</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+    <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-HH-UiVK6wCU5vRhXGKqDZnENdNOuOGbIAg&s">
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+    <!-- PANTALLA DE AUTENTICACIÓN (Login) -->
+    <div id="auth-screen" class="h-screen flex flex-col items-center justify-center bg-slate-50 p-6">
+        <div id="loading-spinner" class="font-black text-blue-600 animate-pulse mb-8 text-xl">
+            CONECTANDO A GOOGLE CLOUD...
+        </div>
+        
+        <div id="login-container" class="hidden text-center max-w-sm w-full">
+            <div class="bg-blue-600 p-5 rounded-[2rem] text-white shadow-2xl shadow-blue-200 mb-8 inline-block">
+                <i data-lucide="wallet" class="w-12 h-12"></i>
+            </div>
+            <h1 class="text-4xl font-black uppercase italic tracking-tighter mb-2">Victor Cloud</h1>
+            <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-10">Gestión Financiera Personal</p>
+            
+            <button id="btn-login-google" class="w-full flex items-center justify-center gap-4 bg-white border border-slate-200 px-6 py-4 rounded-2xl font-black text-sm shadow-sm hover:shadow-md hover:border-blue-200 transition-all active:scale-95">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                Continuar con Google
+            </button>
+            
+            <!-- Mensaje de error mejorado para pruebas en consola -->
+            <div id="error-box" class="mt-6 p-4 bg-red-50 border border-red-100 rounded-2xl hidden">
+                <p class="text-[10px] text-red-600 font-black uppercase mb-1">Error de Dominio</p>
+                <p id="error-text" class="text-[11px] text-red-500 font-medium leading-tight"></p>
+                <p class="mt-2 text-[9px] text-slate-400">Asegúrate de añadir este dominio en la Consola de Firebase > Auth > Settings.</p>
+            </div>
+
+            <p class="mt-8 text-[10px] text-slate-400 font-medium uppercase tracking-tight">Acceso seguro vía Firebase Authentication</p>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div id="main-app" class="hidden min-h-screen flex-col">
+        <!-- NAVBAR -->
+        <nav class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-2 rounded-lg text-white flex items-center justify-center shadow-lg shadow-blue-100">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                </div>
+                <span class="font-black text-lg tracking-tighter uppercase italic">Victor Cloud</span>
+            </div>
+
+            <div class="flex items-center gap-4 bg-slate-100 p-1 rounded-xl border">
+                <button id="btn-prev-month" class="p-2 hover:bg-white rounded-lg transition-all flex items-center justify-center text-slate-500">
+                    <i data-lucide="chevron-left" class="w-[18px] h-[18px]"></i>
+                </button>
+                <div class="px-4 text-center min-w-[140px]">
+                    <p id="display-anio" class="text-[10px] font-black text-slate-400 uppercase leading-none"></p>
+                    <p id="display-mes" class="font-black text-slate-800 uppercase text-xs"></p>
+                </div>
+                <button id="btn-next-month" class="p-2 hover:bg-white rounded-lg transition-all flex items-center justify-center text-slate-500">
+                    <i data-lucide="chevron-right" class="w-[18px] h-[18px]"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button id="btn-logout" class="p-2 text-slate-300 hover:text-red-500 transition-colors mr-1" title="Cerrar Sesión">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+                <div id="user-avatar" class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-md overflow-hidden"></div>
+            </div>
+        </nav>
+
+        <main class="max-w-6xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
+            <!-- PANEL IZQUIERDO -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-200">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-2 tracking-widest">Presupuesto Mensual</p>
+                    <div class="flex items-baseline gap-1 mb-6">
+                        <span class="text-3xl font-black text-slate-300">$</span>
+                        <input type="number" id="input-presupuesto" class="text-4xl font-black w-full bg-transparent outline-none focus:text-blue-600 transition-colors" value="1750" />
+                    </div>
+                    <div class="space-y-4">
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                            <div id="barra-progreso" class="h-full bg-blue-600 transition-all duration-1000" style="width: 0%"></div>
+                        </div>
+                        <div id="caja-disponible" class="p-6 rounded-3xl flex items-center justify-between transition-colors">
+                            <div>
+                                <p class="text-[10px] font-black uppercase opacity-60 mb-1">Disponible</p>
+                                <p id="display-disponible" class="text-2xl font-black">$0</p>
+                            </div>
+                            <div id="icono-estado"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 rounded-[2.5rem] p-8 shadow-xl text-white">
+                    <h3 class="text-[10px] font-black uppercase tracking-widest mb-6 flex items-center gap-2 text-blue-400">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Registro Cloud
+                    </h3>
+                    <form id="form-gasto" class="space-y-4">
+                        <input type="text" id="input-nombre" required class="w-full bg-slate-800 border-none rounded-2xl p-4 text-sm outline-none text-white focus:ring-2 focus:ring-blue-500" placeholder="Descripción" />
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="number" id="input-monto" required class="w-full bg-slate-800 border-none rounded-2xl p-4 text-sm outline-none text-white focus:ring-2 focus:ring-blue-500" placeholder="Monto" />
+                            <select id="input-prioridad" class="w-full bg-slate-800 border-none rounded-2xl p-4 text-xs font-bold outline-none text-white appearance-none cursor-pointer">
+                                <option value="alta">🔴 Alta</option>
+                                <option value="media">🟡 Media</option>
+                                <option value="baja">🟢 Baja</option>
+                            </select>
+                        </div>
+                        <input type="date" id="input-fecha" required class="w-full bg-slate-800 border-none rounded-2xl p-4 text-xs font-bold outline-none text-white" />
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 p-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all mt-4 shadow-lg shadow-blue-600/20 active:scale-95 text-white">Subir a Firestore</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TABLA -->
+            <div class="lg:col-span-8">
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[600px] h-full">
+                    <div class="p-8 border-b flex justify-between items-center bg-slate-50/50">
+                        <div>
+                            <h2 class="font-black text-slate-800 uppercase text-xs tracking-widest">Historial Mensual</h2>
+                            <p id="display-user-context" class="text-[10px] text-blue-500 font-black uppercase mt-1">Sincronización Cloud</p>
+                        </div>
+                        <div class="bg-white px-6 py-3 rounded-2xl border shadow-sm text-right">
+                            <p class="text-[9px] font-black text-slate-400 uppercase leading-tight mb-1">Gasto Total</p>
+                            <p id="display-total" class="text-2xl font-black text-slate-900">$0</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto flex-grow">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-[10px] uppercase font-black text-slate-400 border-b">
+                                    <th class="px-6 py-4 text-center">Nivel</th>
+                                    <th class="px-6 py-4 text-left">Fecha</th>
+                                    <th class="px-6 py-4 text-left">Concepto</th>
+                                    <th class="px-6 py-4 text-right">Monto</th>
+                                    <th class="px-6 py-4"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-gastos" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB_bRA_Dy9Px0f0d155CltRoe4nwxL_biE",
+            authDomain: "victor-finance-cloud.firebaseapp.com",
+            projectId: "victor-finance-cloud",
+            storageBucket: "victor-finance-cloud.firebasestorage.app",
+            messagingSenderId: "382563947155",
+            appId: "1:382563947155:web:b2201c27386d66c476b366"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+        const miAppId = "victor-finance-app-pro";
+
+        let currentUser = null;
+        let gastosTotales = [];
+        let presupuestoMensual = 1750;
+        let mesSeleccionado = new Date().getMonth();
+        let anioSeleccionado = new Date().getFullYear();
+        const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        const ui = {
+            authScreen: document.getElementById('auth-screen'),
+            loading: document.getElementById('loading-spinner'),
+            loginBox: document.getElementById('login-container'),
+            btnLogin: document.getElementById('btn-login-google'),
+            btnLogout: document.getElementById('btn-logout'),
+            mainApp: document.getElementById('main-app'),
+            avatar: document.getElementById('user-avatar'),
+            userNameContext: document.getElementById('display-user-context'),
+            mes: document.getElementById('display-mes'),
+            anio: document.getElementById('display-anio'),
+            btnPrev: document.getElementById('btn-prev-month'),
+            btnNext: document.getElementById('btn-next-month'),
+            inputPresupuesto: document.getElementById('input-presupuesto'),
+            barraProgreso: document.getElementById('barra-progreso'),
+            cajaDisponible: document.getElementById('caja-disponible'),
+            displayDisponible: document.getElementById('display-disponible'),
+            iconoEstado: document.getElementById('icono-estado'),
+            displayTotal: document.getElementById('display-total'),
+            formGasto: document.getElementById('form-gasto'),
+            tablaGastos: document.getElementById('tabla-gastos'),
+            errorBox: document.getElementById('error-box'),
+            errorText: document.getElementById('error-text')
+        };
+
+        ui.btnLogin.addEventListener('click', async () => {
+            ui.errorBox.classList.add('hidden');
+            try { 
+                await signInWithPopup(auth, provider); 
+            } catch (e) { 
+                console.error("Firebase Login Error:", e.code, e.message);
+                ui.errorBox.classList.remove('hidden');
+                ui.errorText.textContent = e.code === 'auth/unauthorized-domain' 
+                    ? "El dominio actual no está autorizado en Firebase." 
+                    : "Error: " + e.code;
+            }
+        });
+
+        ui.btnLogout.addEventListener('click', () => signOut(auth));
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                ui.authScreen.classList.add('hidden');
+                ui.mainApp.classList.remove('hidden');
+                ui.mainApp.classList.add('flex');
+                ui.avatar.innerHTML = `<img src="${user.photoURL}" class="w-full h-full object-cover">`;
+                ui.userNameContext.textContent = `Sesión: ${user.displayName}`;
+                iniciarSincronizacion();
+            } else {
+                currentUser = null;
+                ui.authScreen.classList.remove('hidden');
+                ui.mainApp.classList.add('hidden');
+                ui.loading.classList.add('hidden');
+                ui.loginBox.classList.remove('hidden');
+            }
+        });
+
+        function iniciarSincronizacion() {
+            onSnapshot(collection(db, 'artifacts', miAppId, 'users', currentUser.uid, 'gastos'), (snap) => {
+                gastosTotales = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                actualizarVista();
+            });
+            onSnapshot(doc(db, 'artifacts', miAppId, 'users', currentUser.uid, 'config', 'presupuesto_general'), (docSnap) => {
+                if (docSnap.exists()) {
+                    presupuestoMensual = docSnap.data().monto;
+                    ui.inputPresupuesto.value = presupuestoMensual;
+                    actualizarVista();
+                }
+            });
+        }
+
+        function actualizarVista() {
+            ui.mes.textContent = MESES[mesSeleccionado];
+            ui.anio.textContent = anioSeleccionado;
+            const filtrados = gastosTotales.filter(g => {
+                const d = new Date(g.fecha + 'T00:00:00');
+                return d.getMonth() === mesSeleccionado && d.getFullYear() === anioSeleccionado;
+            }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            const total = filtrados.reduce((s, g) => s + g.monto, 0);
+            const libre = presupuestoMensual - total;
+            const porc = Math.min((total / presupuestoMensual) * 100, 100);
+
+            ui.displayTotal.textContent = `$${total.toLocaleString()}`;
+            ui.displayDisponible.textContent = `$${libre.toLocaleString()}`;
+            ui.barraProgreso.style.width = `${porc}%`;
+            ui.barraProgreso.className = `h-full transition-all duration-1000 ${porc > 90 ? 'bg-red-500' : 'bg-blue-600'}`;
+            ui.cajaDisponible.className = `p-6 rounded-3xl flex items-center justify-between transition-colors ${libre < 0 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-700'}`;
+            ui.iconoEstado.innerHTML = `<i data-lucide="${libre < 0 ? 'alert-circle' : 'check-circle-2'}" class="w-7 h-7"></i>`;
+
+            ui.tablaGastos.innerHTML = filtrados.length === 0 ? '<tr><td colspan="5" class="px-6 py-32 text-center opacity-20 font-black uppercase text-xs italic">Sin datos</td></tr>' : '';
+            filtrados.forEach(g => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors group";
+                tr.innerHTML = `
+                    <td class="px-6 py-4"><div class="w-2.5 h-2.5 rounded-full mx-auto ${g.prioridad === 'alta' ? 'bg-red-500' : g.prioridad === 'media' ? 'bg-yellow-400' : 'bg-green-500'}"></div></td>
+                    <td class="px-6 py-4 text-[11px] font-bold text-slate-400 font-mono">${g.fecha.split('-').reverse().join('/')}</td>
+                    <td class="px-6 py-4 font-black text-slate-800 text-sm">${g.nombre}</td>
+                    <td class="px-6 py-4 text-right font-black text-slate-900 text-base">$${g.monto.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-center"><button class="text-slate-200 hover:text-red-500 p-2" onclick="window.borrarGasto('${g.id}')"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>`;
+                ui.tablaGastos.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        window.borrarGasto = async (id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, 'artifacts', miAppId, 'users', currentUser.uid, 'gastos', id)); };
+        ui.btnPrev.addEventListener('click', () => { mesSeleccionado--; if(mesSeleccionado<0){ mesSeleccionado=11; anioSeleccionado--; } actualizarVista(); });
+        ui.btnNext.addEventListener('click', () => { mesSeleccionado++; if(mesSeleccionado>11){ mesSeleccionado=0; anioSeleccionado++; } actualizarVista(); });
+        ui.inputPresupuesto.addEventListener('change', async (e) => { if(!currentUser) return; await setDoc(doc(db, 'artifacts', miAppId, 'users', currentUser.uid, 'config', 'presupuesto_general'), { monto: Number(e.target.value) }); });
+        ui.formGasto.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const g = { nombre: document.getElementById('input-nombre').value, monto: Number(document.getElementById('input-monto').value), prioridad: document.getElementById('input-prioridad').value, fecha: document.getElementById('input-fecha').value, timestamp: Date.now() };
+            await addDoc(collection(db, 'artifacts', miAppId, 'users', currentUser.uid, 'gastos'), g);
+            ui.formGasto.reset();
+            document.getElementById('input-fecha').value = new Date().toISOString().split('T')[0];
+        });
+
+        document.getElementById('input-fecha').value = new Date().toISOString().split('T')[0];
+        lucide.createIcons();
+    </script>
+</body>
+</html>
