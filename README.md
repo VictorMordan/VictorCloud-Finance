@@ -7,8 +7,8 @@ Características Principales
 Autenticación con Google: Acceso seguro sin necesidad de recordar nuevas contraseñas.
 
 Sincronización Cloud: Tus datos disponibles en cualquier dispositivo gracias a Firebase Firestore.
+<img width="1363" height="645" alt="image" src="https://github.com/user-attachments/assets/a5f09aaa-6e72-4d0d-8515-60584c467715" />
 
-<img width="1365" height="649" alt="image" src="https://github.com/user-attachments/assets/cd4dd451-c638-466d-bfcd-b0c55b1dc05c" />
 
 
 
