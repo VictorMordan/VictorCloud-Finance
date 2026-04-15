@@ -8,25 +8,11 @@ Autenticación con Google: Acceso seguro sin necesidad de recordar nuevas contra
 
 Sincronización Cloud: Tus datos disponibles en cualquier dispositivo gracias a Firebase Firestore.
 
-Control de Presupuesto: Visualización dinámica mediante barras de progreso que cambian de color según tu consumo.
-
-Historial Inteligente: Clasificación de gastos por niveles de prioridad (Alta, Media, Baja).
-
-Interfaz Premium: Diseño minimalista y responsive construido con Tailwind CSS y Lucide Icons.
-Tecnologías Utilizadas
-
-Frontend: HTML5, JavaScript (ES6+), Tailwind CSS.
-
-Backend: Firebase Authentication, Cloud Firestore.
-
-Iconografía: Lucide-react.
-
 <img width="1365" height="649" alt="image" src="https://github.com/user-attachments/assets/cd4dd451-c638-466d-bfcd-b0c55b1dc05c" />
 
 
 
 Autor: Victor Mordan
-
 GitHub: @victormordan
 
 Este proyecto es parte de mi portafolio como desarrollador. Si te gusta, ¡no olvides darle una ⭐ al repositorio!
