@@ -158,7 +158,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
         const firebaseConfig = {
             apiKey: "AIzaSyB_bRA_Dy9Px0f0d155CltRoe4nwxL_biE",
             authDomain: "victor-finance-cloud.firebaseapp.com",
@@ -166,6 +166,7 @@
             storageBucket: "victor-finance-cloud.firebasestorage.app",
             messagingSenderId: "382563947155",
             appId: "1:382563947155:web:b2201c27386d66c476b366"
+            measurementId: "G-XXXXXXXXXX"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -173,6 +174,7 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
         const miAppId = "victor-finance-app-pro";
+        const analytics = getAnalytics(app);
 
         let currentUser = null;
         let gastosTotales = [];
